@@ -30,6 +30,8 @@ goog.scope(function() {
     this.grids = grids;
     this.doc = doc;
 
+    this.prefetch_images = [];
+
     // Automatically process the HTML, if any was given to us
     if (node) {
       this.processHTML(node);
@@ -199,6 +201,34 @@ goog.scope(function() {
 
     // Construct
     this.content = new Content(fake_column, this.doc);
+
+
+      for (var figureIndex in this.content.figures) {
+          for (var size in this.content.figures[figureIndex].sizes) {
+              var figure = this.content.figures[figureIndex];
+              for (var figureSizeIndex in figure.sizes[size]) {
+                  var figureSize = figure.sizes[size][figureSizeIndex];
+                  var html = figureSize.html;
+                  var fake_figure = document.createElement('div');
+                  fake_figure.innerHTML = html
+                  fake_figure.style.display = 'none';
+                  document.body.appendChild(fake_figure);
+
+                  dom.querySelectorAll('img.prefetch[data-src]', fake_figure).forEach(function (e) {
+                      //e.setAttribute('src', e.getAttribute('data-src'));
+                      var preloadImage = new Image();
+                      preloadImage.src = e.getAttribute('data-src');
+                  });
+
+                  document.body.removeChild(fake_figure);
+
+                  continue;
+
+              }
+
+          }
+      }
+
 
     // Clean up the DOM
     document.body.removeChild(fake_grid);

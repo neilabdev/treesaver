@@ -141,7 +141,8 @@ goog.scope(function() {
    */
   Article.events = {
     PAGINATIONERROR: 'treesaver.paginationerror',
-    PAGINATIONPROGRESS: 'treesaver.paginationprogress'
+    PAGINATIONPROGRESS: 'treesaver.paginationprogress',
+    PAGINATIONPRELOADING: 'treesaver.paginationpreloading'
   };
 
   /**
@@ -203,8 +204,8 @@ goog.scope(function() {
     this.content = new Content(fake_column, this.doc);
 
 
-      for (var figureIndex in this.content.figures) {
-          for (var size in this.content.figures[figureIndex].sizes) {
+    for (var figureIndex in this.content.figures) {
+        for (var size in this.content.figures[figureIndex].sizes) {
               var figure = this.content.figures[figureIndex];
               for (var figureSizeIndex in figure.sizes[size]) {
                   var figureSize = figure.sizes[size][figureSizeIndex];
@@ -215,10 +216,31 @@ goog.scope(function() {
                   document.body.appendChild(fake_figure);
 
                   dom.querySelectorAll('img.prefetch[data-src]', fake_figure).forEach(function (e) {
-                      //e.setAttribute('src', e.getAttribute('data-src'));
                       var preloadImage = new Image();
+
+                      this.prefetch_images.push(preloadImage);
+                      preloadImage.article = this;
+                      preloadImage.finished_loading = false;
+
+                      preloadImage.onload = function() {
+
+                          this.finished_loading = true;
+
+                          //this.prefect_images.pop();
+                      }
+
+                      preloadImage.onabort = function() {
+                          this.finished_loading = true;
+                          //this.prefect_images.pop();
+                      }
+
+                      preloadImage.onerror = function() {
+                          this.finished_loading = true;
+                          //this.prefect_images.pop();
+                      }
+
                       preloadImage.src = e.getAttribute('data-src');
-                  });
+                  },this);
 
                   document.body.removeChild(fake_figure);
 
@@ -226,8 +248,8 @@ goog.scope(function() {
 
               }
 
-          }
-      }
+        }
+    }
 
 
     // Clean up the DOM
@@ -351,6 +373,24 @@ goog.scope(function() {
         return;
       }
     }
+
+
+    if(this.prefetch_images!=undefined && this.prefetch_images.length>0) {
+        for (var i in this.prefetch_images) {
+            var image = this.prefetch_images[i];
+            if(image!=undefined && !image.finished_loading) {
+                events.fireEvent(
+                    document,
+                    Article.events.PAGINATIONPRELOADING,
+                    { article: this }
+                );
+                return ;
+            }
+        }
+
+        this.prefetch_images = [];
+    }
+
 
     // Stop any previous pagination
     // (TODO: What if this conflicts with other articles?)

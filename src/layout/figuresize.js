@@ -82,7 +82,28 @@ goog.scope(function() {
 
     // Find any cloaked images
     dom.querySelectorAll('img[data-src], iframe[data-src], video[data-src], source[data-src], audio[data-src]', container).forEach(function(e) {
-      e.setAttribute('src', e.getAttribute('data-src'));
+        var data_src =  e.getAttribute('data-src');
+
+        var scaletofit = dom.hasClass(e,"scaletofit");
+        var containerNode = e.parentNode;
+
+        var imageHeight = (dom.prefetch_set[data_src] &&   dom.prefetch_set[data_src].height)  || e.getAttribute("height") || 0  ;
+        var imageWidth = (dom.prefetch_set[data_src] &&   dom.prefetch_set[data_src].width)  || e.getAttribute("width") || 0    ;
+
+        e.setAttribute('src',data_src);
+
+        if(scaletofit && containerNode && containerNode.offsetWidth>0 && imageHeight > 0) {
+
+            var ratio = containerNode.offsetWidth / imageWidth;
+
+            e.width = imageWidth * ratio;
+            e.height = imageHeight *ratio;
+
+        }
+
+
+
+
     });
   };
 

@@ -204,8 +204,8 @@ goog.scope(function() {
     this.content = new Content(fake_column, this.doc);
 
 
-    for (var figureIndex in this.content.figures) {
-        for (var size in this.content.figures[figureIndex].sizes) {
+      for (var figureIndex in this.content.figures) {
+          for (var size in this.content.figures[figureIndex].sizes) {
               var figure = this.content.figures[figureIndex];
               for (var figureSizeIndex in figure.sizes[size]) {
                   var figureSize = figure.sizes[size][figureSizeIndex];
@@ -216,31 +216,38 @@ goog.scope(function() {
                   document.body.appendChild(fake_figure);
 
                   dom.querySelectorAll('img.prefetch[data-src]', fake_figure).forEach(function (e) {
-                      var preloadImage = new Image();
+                      var preload_url = e.getAttribute('data-src');
 
-                      this.prefetch_images.push(preloadImage);
-                      preloadImage.article = this;
-                      preloadImage.finished_loading = false;
 
-                      preloadImage.onload = function() {
+                      if (dom.prefetch_set[preload_url] == undefined) {
+                          var preloadImage = new Image();
 
-                          this.finished_loading = true;
+                          dom.prefetch_set[preload_url] = preloadImage
+                          this.prefetch_images.push(preloadImage);
+                          preloadImage.article = this;
+                          preloadImage.finished_loading = false;
 
-                          //this.prefect_images.pop();
+                          preloadImage.onload = function () {
+
+                              this.finished_loading = true;
+
+                              //this.prefect_images.pop();
+                          }
+
+                          preloadImage.onabort = function () {
+                              this.finished_loading = true;
+                              //this.prefect_images.pop();
+                          }
+
+                          preloadImage.onerror = function () {
+                              this.finished_loading = true;
+                              //this.prefect_images.pop();
+                          }
+
+
+                          preloadImage.src = preload_url;
                       }
-
-                      preloadImage.onabort = function() {
-                          this.finished_loading = true;
-                          //this.prefect_images.pop();
-                      }
-
-                      preloadImage.onerror = function() {
-                          this.finished_loading = true;
-                          //this.prefect_images.pop();
-                      }
-
-                      preloadImage.src = e.getAttribute('data-src');
-                  },this);
+                  }, this);
 
                   document.body.removeChild(fake_figure);
 
@@ -248,11 +255,11 @@ goog.scope(function() {
 
               }
 
-        }
-    }
+          }
+      }
 
 
-    // Clean up the DOM
+      // Clean up the DOM
     document.body.removeChild(fake_grid);
     fake_grid.removeChild(fake_column);
     dom.clearChildren(fake_column);
@@ -376,6 +383,8 @@ goog.scope(function() {
 
 
     if(this.prefetch_images!=undefined && this.prefetch_images.length>0) {
+        // Here, if there were any queued  images, that is, any images with a 'prefetch' class and a data-src,
+        // ensure that they were either downloaded if existing,
         for (var i in this.prefetch_images) {
             var image = this.prefetch_images[i];
             if(image!=undefined && !image.finished_loading) {
@@ -388,7 +397,7 @@ goog.scope(function() {
             }
         }
 
-        this.prefetch_images = [];
+        this.prefetch_images = []; // HOPEFULLY, this release memory of the unused objects.
     }
 
 

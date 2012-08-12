@@ -101,6 +101,10 @@ goog.scope(function() {
     };
   }
 
+
+
+  dom.prefetch_set = {}
+
   /**
    * Use querySelectorAll on an element tree
    *

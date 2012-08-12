@@ -258,7 +258,8 @@ goog.scope(function() {
   ArticleManager.watchedEvents = [
     Document.events.LOADED,
     Document.events.LOADFAILED,
-    Article.events.PAGINATIONPROGRESS
+    Article.events.PAGINATIONPROGRESS,
+    Article.events.PAGINATIONPRELOADING
   ];
 
   /**
@@ -271,6 +272,15 @@ goog.scope(function() {
       // Fire event
       events.fireEvent(document, ArticleManager.events.PAGESCHANGED);
       return;
+    }
+
+
+    if (e.type === Article.events.PAGINATIONPRELOADING) {
+          // We have new pages to display
+          // TODO
+          // Fire event
+          events.fireEvent(document, ArticleManager.events.PAGESCHANGED);
+          return;
     }
 
     if (e.type === Document.events.LOADED) {

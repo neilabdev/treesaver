@@ -215,11 +215,19 @@ goog.scope(function() {
                   fake_figure.style.display = 'none';
                   document.body.appendChild(fake_figure);
 
-                  dom.querySelectorAll('img.prefetch[data-src]', fake_figure).forEach(function (e) {
+                  dom.querySelectorAll('img.prefetch[data-src],img.scaletofit[data-src]', fake_figure).forEach(function (e) {
                       var preload_url = e.getAttribute('data-src');
 
+                      var   is_sizetofit = dom.hasClass(e,"scaletofit");
+                      var   is_prefetch = dom.hasClass(e,"prefetch");
 
-                      if (dom.prefetch_set[preload_url] == undefined) {
+                      var   has_size =  (e.getAttribute("data-width") || e.getAttribute("width"))>0 &&
+                                        (e.getAttribute("data-height") || e.getAttribute("height"))> 0
+
+
+                      if (dom.prefetch_set[preload_url] == undefined &&
+                            (is_prefetch || (is_sizetofit && !has_size) )) {
+
                           var preloadImage = new Image();
 
                           dom.prefetch_set[preload_url] = preloadImage

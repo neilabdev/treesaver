@@ -87,8 +87,8 @@ goog.scope(function() {
         var scaletofit = dom.hasClass(e,"scaletofit");
         var containerNode = e.parentNode;
 
-        var imageHeight = (dom.prefetch_set[data_src] &&   dom.prefetch_set[data_src].height)  || e.getAttribute("height") || 0  ;
-        var imageWidth = (dom.prefetch_set[data_src] &&   dom.prefetch_set[data_src].width)  || e.getAttribute("width") || 0    ;
+        var imageHeight = (dom.prefetch_set[data_src] &&   dom.prefetch_set[data_src].height)  || e.getAttribute("height") ||  e.getAttribute("data-height")|| 0  ;
+        var imageWidth = (dom.prefetch_set[data_src] &&   dom.prefetch_set[data_src].width)  || e.getAttribute("width") || e.getAttribute("data-width") ||0    ;
 
         e.setAttribute('src',data_src);
 

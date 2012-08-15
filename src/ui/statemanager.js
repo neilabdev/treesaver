@@ -15,6 +15,8 @@ goog.require('treesaver.scheduler');
 goog.require('treesaver.ui.Chrome');
 goog.require('treesaver.ui.LightBox');
 
+
+
 goog.scope(function() {
   var StateManager = treesaver.ui.StateManager,
       capabilities = treesaver.capabilities,
@@ -111,7 +113,8 @@ goog.scope(function() {
    * @type {Object.<string, string>}
    */
   StateManager.events = {
-    CHROMECHANGED: 'treesaver.chromechanged'
+    CHROMECHANGED: 'treesaver.chromechanged',
+    ORIENTATIONCHANGED: 'treesaver.chromechanged'
   };
 
   /**
@@ -204,6 +207,9 @@ goog.scope(function() {
   /**
    * Detect any changes in orientation, and update the viewport accordingly
    */
+
+
+
   StateManager.onOrientationChange = function() {
     if (StateManager.state_.orientation === window['orientation']) {
       // Nothing to do (false alarm?)
@@ -351,5 +357,8 @@ goog.scope(function() {
       treesaver.activeFunctionWrapper(treesaver.ui.ArticleManager.nextArticle));
     goog.exportSymbol('treesaver.previousArticle',
       treesaver.activeFunctionWrapper(treesaver.ui.ArticleManager.previousArticle));
+
+
   }
+  //  goog.exportSymbol('treesaver.ui.StateManager', StateManager);
 });

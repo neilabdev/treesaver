@@ -10,6 +10,11 @@ goog.require('treesaver.dimensions');
 goog.require('treesaver.dom');
 goog.require('treesaver.ui.Scrollable');
 
+
+
+goog.require('treesaver.events');
+goog.require('treesaver.ui.Article');
+goog.require('treesaver.ui.Document');
 goog.scope(function() {
   var debug = treesaver.debug,
       dimensions = treesaver.dimensions,
@@ -51,9 +56,37 @@ goog.scope(function() {
       debug = treesaver.debug,
       dimensions = treesaver.dimensions,
       dom = treesaver.dom,
+      events = treesaver.events,
+      Article = treesaver.ui.Article,
+      Document = treesaver.ui.Document,
       Scrollable = treesaver.ui.Scrollable;
 
-  /**
+
+
+    LightBox.watchedEvents = [
+        Document.events.LOADED,
+        Document.events.LOADFAILED,
+        Article.events.PAGINATIONPROGRESS,
+        Article.events.PAGINATIONPRELOADING  ,
+        //treesaver.ui.StateManager.events.ORIENTATIONCHANGED,
+        "treesaver.chromechanged",   //TODO: Reference treesaver.ui.StateManger.events
+        'mousewheel',
+        'DOMMouseScroll'
+    ];
+
+    LightBox.handleEvent = function(e) {
+        if (e.type === Article.events.PAGINATIONPROGRESS) {
+            // We have new pages to display
+            // TODO
+            // Fire event
+            //events.fireEvent(document, ArticleManager.events.PAGESCHANGED);
+            return;
+        }
+    }
+
+
+
+        /**
    * List of required capabilities for this LightBox
    *
    * @type {?Array.<string>}
@@ -95,6 +128,17 @@ goog.scope(function() {
 
       this.node = dom.createElementFromHTML(this.html);
       this.container = dom.querySelectorAll('.container', this.node)[0];
+
+
+        LightBox.watchedEvents.forEach(function(evt) {
+            events.addListener(document, evt, LightBox.handleEvent);
+        });
+       // if (capabilities.SUPPORTS_ORIENTATION && !treesaver.inContainedMode) {
+       //     events.addListener(window, 'orientationchange',LightBox.handleEvent);
+       // }
+
+
+
     }
 
     return /** @type {!Element} */ (this.node);
@@ -109,7 +153,12 @@ goog.scope(function() {
     }
 
     this.active = false;
-
+      LightBox.watchedEvents.forEach(function(evt) {
+          events.removeListener(document, evt, LightBox.handleEvent);
+      });
+     // if (capabilities.SUPPORTS_ORIENTATION && !treesaver.inContainedMode) {
+     ///     events.removeListener(window, 'orientationchange', LightBox.handleEvent);
+     // }
     // Make sure to drop references
     this.node = null;
   };

@@ -20,6 +20,7 @@ goog.scope(function() {
       dimensions = treesaver.dimensions,
       dom = treesaver.dom,
       events = treesaver.events,
+      ArticleManager = treesaver.ui.ArticleManager,
       Article = treesaver.ui.Article;;
 
   /**
@@ -43,6 +44,7 @@ goog.scope(function() {
       node.getAttribute('data-requires').split(' ') : null;
 
     this.html = node.parentNode.innerHTML;
+    this.handlers = {};
 
     this.size = new dimensions.Metrics(node);
 
@@ -53,12 +55,8 @@ goog.scope(function() {
 
 
     treesaver.ui.LightBox.watchedEvents = [
-        Article.events.PAGINATIONPROGRESS,
-        Article.events.PAGINATIONPRELOADING  ,
-        //treesaver.ui.StateManager.events.ORIENTATIONCHANGED,
-        "treesaver.orientationchanged",   //TODO: Reference treesaver.ui.StateManger.events
-        'mousewheel',
-        'DOMMouseScroll'
+        ArticleManager.events.PAGESCHANGED,
+        "treesaver.orientationchanged"
     ];
 
 
@@ -73,14 +71,20 @@ goog.scope(function() {
       dom = treesaver.dom,
       events = treesaver.events,
       Article = treesaver.ui.Article,
+      ArticleManager = treesaver.ui.ArticleManager,
       Document = treesaver.ui.Document,
       Scrollable = treesaver.ui.Scrollable;
 
 
 
 
+    /**
+     * List of anonymous handlers for this LightBox
+     *
+     * @type {?Array.<Object>}
+     */
 
-
+    LightBox.prototype.handlers;
 
         /**
    * List of required capabilities for this LightBox
@@ -118,7 +122,8 @@ goog.scope(function() {
 
 
     LightBox.prototype.handleEvent = function(e) {
-        if (e.type === "treesaver.orientationchanged") {
+
+        if (e.type === "treesaver.orientationchanged" || e.type === ArticleManager.events.PAGESCHANGED ) {
             // We have new pages to display
             // TODO
             // Fire event
@@ -144,10 +149,12 @@ goog.scope(function() {
 
         LightBox.watchedEvents.forEach(function(evt) {
             var that = this;
-            events.addListener(document, evt, function(event) {
+            var handler =  function(event) {
                 that.handleEvent(event);
-            }
-          );
+            };
+            events.addListener(document, evt, handler );
+
+            that.handlers[evt]=handler;
         },this);
 
 
@@ -178,27 +185,31 @@ goog.scope(function() {
        windowH =  window.screen.height;
 
 
+
        if (capabilities.SUPPORTS_ORIENTATION && !treesaver.inContainedMode) {
            if (orientation % 180) {
                // Rotated (landscape)
                // StateManager.state_.viewport.setAttribute('content',
                //    'width=device-height, height=device-width');
-               tmp_w = contentW;
-               contentW=contentH;
-               contentH=tmp_w;
+            //   tmp_w = contentW;
+            //   contentW=contentH;
+            //   contentH=tmp_w;
 
                tmp_w = screenW;
-               screenW = screenH;
-               screenH = tmp_w;
+             //  screenW = screenH;
+              // screenH = tmp_w;
 
                windowW =  window.screen.height;
                windowH =  window.screen.width;
 
 
-               tmp_w = metrics.bpWidth;
+             //  tmp_w = metrics.bpWidth;
 
-               metrics.bpWidth = metrics.bpHeight;
-               metrics.bpHeight = tmp_w;
+            //   metrics.bpWidth = metrics.bpHeight;
+            //   metrics.bpHeight = tmp_w;
+
+           //    left_attr="top";
+           //    top_attr="left";
 
            } else {
                // Normal
@@ -206,11 +217,22 @@ goog.scope(function() {
                //      'width=device-width, height=device-height');
            }
        }
-       dimensions.setCssPx(container.parentElement,"width",windowW)    ;
-       dimensions.setCssPx(container.parentElement,"height",windowH)    ;
+
+       var chromeElement =  dom.querySelectorAll('.chrome', document)[0];     //this.container.parentElement.parentNode.firstChild
+       var chromeWidth =  dimensions.getOffsetWidth(chromeElement);
+       var chromeHeight =   dimensions.getOffsetHeight(chromeElement);
+       dimensions.setCssPx(container.parentElement, 'width', chromeWidth);
+       dimensions.setCssPx(container.parentElement, 'height', chromeHeight);
+
+
+      // dimensions.setCssPx(container.parentElement,"width",screenW)    ;
+      // dimensions.setCssPx(container.parentElement,"height",screenH)    ;
        // Center the container on the screen (use offsetWidth to include border/padding)
-       dimensions.setCssPx(container, 'left', (screenW - contentW - metrics.bpWidth) / 2);
-       dimensions.setCssPx(container, 'top', (screenH - contentH - metrics.bpHeight) / 2);
+      // dimensions.setCssPx(container, 'left', (windowW - contentW ) / 2);
+      // dimensions.setCssPx(container, 'top', (windowH - contentH ) / 2);
+       dimensions.setCssPx(this.container, "left", (screenW - contentW - metrics.bpWidth) / 2);
+       dimensions.setCssPx(this.container, "top", (screenH - contentH - metrics.bpHeight) / 2);
+
 
 
 
@@ -226,9 +248,11 @@ goog.scope(function() {
     }
 
     this.active = false;
-      LightBox.watchedEvents.forEach(function(evt) {
-          events.removeListener(document, evt, LightBox.handleEvent);
-      });
+    LightBox.watchedEvents.forEach(function(evt) {
+        events.removeListener(document, evt, this.handlers[evt]);
+    },this);
+    this.handlers = {};
+
      // if (capabilities.SUPPORTS_ORIENTATION && !treesaver.inContainedMode) {
      ///     events.removeListener(window, 'orientationchange', LightBox.handleEvent);
      // }

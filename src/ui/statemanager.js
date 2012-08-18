@@ -114,7 +114,7 @@ goog.scope(function() {
    */
   StateManager.events = {
     CHROMECHANGED: 'treesaver.chromechanged',
-    ORIENTATIONCHANGED: 'treesaver.chromechanged'
+    ORIENTATIONCHANGED: 'treesaver.orientationchanged'
   };
 
   /**
@@ -244,6 +244,12 @@ goog.scope(function() {
     // TODO: Update classes for styling?
 
     // TODO: Access widths to force layout?
+
+      events.fireEvent(
+          document, StateManager.events.ORIENTATIONCHANGED, {
+
+          }
+      );
   };
 
   /**

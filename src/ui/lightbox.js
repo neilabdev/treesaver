@@ -18,7 +18,9 @@ goog.require('treesaver.ui.Document');
 goog.scope(function() {
   var debug = treesaver.debug,
       dimensions = treesaver.dimensions,
-      dom = treesaver.dom;
+      dom = treesaver.dom,
+      events = treesaver.events,
+      Article = treesaver.ui.Article;;
 
   /**
    * LightBox
@@ -48,6 +50,19 @@ goog.scope(function() {
     delete this.size.w;
     delete this.size.h;
   };
+
+
+    treesaver.ui.LightBox.watchedEvents = [
+        Article.events.PAGINATIONPROGRESS,
+        Article.events.PAGINATIONPRELOADING  ,
+        //treesaver.ui.StateManager.events.ORIENTATIONCHANGED,
+        "treesaver.orientationchanged",   //TODO: Reference treesaver.ui.StateManger.events
+        'mousewheel',
+        'DOMMouseScroll'
+    ];
+
+
+
 });
 
 goog.scope(function() {
@@ -63,26 +78,7 @@ goog.scope(function() {
 
 
 
-    LightBox.watchedEvents = [
-        Document.events.LOADED,
-        Document.events.LOADFAILED,
-        Article.events.PAGINATIONPROGRESS,
-        Article.events.PAGINATIONPRELOADING  ,
-        //treesaver.ui.StateManager.events.ORIENTATIONCHANGED,
-        "treesaver.chromechanged",   //TODO: Reference treesaver.ui.StateManger.events
-        'mousewheel',
-        'DOMMouseScroll'
-    ];
 
-    LightBox.handleEvent = function(e) {
-        if (e.type === Article.events.PAGINATIONPROGRESS) {
-            // We have new pages to display
-            // TODO
-            // Fire event
-            //events.fireEvent(document, ArticleManager.events.PAGESCHANGED);
-            return;
-        }
-    }
 
 
 
@@ -119,6 +115,21 @@ goog.scope(function() {
    */
   LightBox.prototype.container;
 
+
+
+    LightBox.prototype.handleEvent = function(e) {
+        if (e.type === "treesaver.orientationchanged") {
+            // We have new pages to display
+            // TODO
+            // Fire event
+            //events.fireEvent(document, ArticleManager.events.PAGESCHANGED);
+
+            this.layoutLightbox(this.container);
+
+            return;
+        }
+    }
+
   /**
    * @return {!Element} The activated node.
    */
@@ -130,9 +141,16 @@ goog.scope(function() {
       this.container = dom.querySelectorAll('.container', this.node)[0];
 
 
+
         LightBox.watchedEvents.forEach(function(evt) {
-            events.addListener(document, evt, LightBox.handleEvent);
-        });
+            var that = this;
+            events.addListener(document, evt, function(event) {
+                that.handleEvent(event);
+            }
+          );
+        },this);
+
+
        // if (capabilities.SUPPORTS_ORIENTATION && !treesaver.inContainedMode) {
        //     events.addListener(window, 'orientationchange',LightBox.handleEvent);
        // }
@@ -143,6 +161,61 @@ goog.scope(function() {
 
     return /** @type {!Element} */ (this.node);
   };
+
+
+
+   LightBox.prototype.layoutLightbox=function(container) {
+       var screenW = dimensions.getOffsetWidth(container.offsetParent),
+           screenH = dimensions.getOffsetHeight(container.offsetParent),
+           orientation =   window['orientation'],
+           contentW, contentH, windowW,windowH,metrics,tmp_w;
+
+
+       metrics = new dimensions.Metrics(container);
+       contentW = metrics.w;
+       contentH = metrics.h;
+       windowW =  window.screen.width;
+       windowH =  window.screen.height;
+
+
+       if (capabilities.SUPPORTS_ORIENTATION && !treesaver.inContainedMode) {
+           if (orientation % 180) {
+               // Rotated (landscape)
+               // StateManager.state_.viewport.setAttribute('content',
+               //    'width=device-height, height=device-width');
+               tmp_w = contentW;
+               contentW=contentH;
+               contentH=tmp_w;
+
+               tmp_w = screenW;
+               screenW = screenH;
+               screenH = tmp_w;
+
+               windowW =  window.screen.height;
+               windowH =  window.screen.width;
+
+
+               tmp_w = metrics.bpWidth;
+
+               metrics.bpWidth = metrics.bpHeight;
+               metrics.bpHeight = tmp_w;
+
+           } else {
+               // Normal
+               //  StateManager.state_.viewport.setAttribute('content',
+               //      'width=device-width, height=device-height');
+           }
+       }
+       dimensions.setCssPx(container.parentElement,"width",windowW)    ;
+       dimensions.setCssPx(container.parentElement,"height",windowH)    ;
+       // Center the container on the screen (use offsetWidth to include border/padding)
+       dimensions.setCssPx(container, 'left', (screenW - contentW - metrics.bpWidth) / 2);
+       dimensions.setCssPx(container, 'top', (screenH - contentH - metrics.bpHeight) / 2);
+
+
+
+   };
+
 
   /**
    * Deactivate the lightbox
@@ -225,9 +298,11 @@ goog.scope(function() {
         Scrollable.initDom(this.container);
       }
 
+        this.layoutLightbox(this.container);
+
       // Center the container on the screen (use offsetWidth to include border/padding)
-      dimensions.setCssPx(this.container, 'left', (screenW - contentW - metrics.bpWidth) / 2);
-      dimensions.setCssPx(this.container, 'top', (screenH - contentH - metrics.bpHeight) / 2);
+      //dimensions.setCssPx(this.container, 'left', (screenW - contentW - metrics.bpWidth) / 2);
+      //dimensions.setCssPx(this.container, 'top', (screenH - contentH - metrics.bpHeight) / 2);
       return true;
     }
     else {

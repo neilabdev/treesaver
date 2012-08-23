@@ -18,7 +18,10 @@ goog.require('treesaver.ui.Document');
 goog.scope(function() {
   var debug = treesaver.debug,
       dimensions = treesaver.dimensions,
-      dom = treesaver.dom;
+      dom = treesaver.dom,
+      events = treesaver.events,
+      ArticleManager = treesaver.ui.ArticleManager,
+      Article = treesaver.ui.Article;;
 
   /**
    * LightBox
@@ -41,6 +44,7 @@ goog.scope(function() {
       node.getAttribute('data-requires').split(' ') : null;
 
     this.html = node.parentNode.innerHTML;
+    this.handlers = {};
 
     this.size = new dimensions.Metrics(node);
 
@@ -48,6 +52,15 @@ goog.scope(function() {
     delete this.size.w;
     delete this.size.h;
   };
+
+
+    treesaver.ui.LightBox.watchedEvents = [
+        ArticleManager.events.PAGESCHANGED,
+        "treesaver.orientationchanged"
+    ];
+
+
+
 });
 
 goog.scope(function() {
@@ -58,33 +71,20 @@ goog.scope(function() {
       dom = treesaver.dom,
       events = treesaver.events,
       Article = treesaver.ui.Article,
+      ArticleManager = treesaver.ui.ArticleManager,
       Document = treesaver.ui.Document,
       Scrollable = treesaver.ui.Scrollable;
 
 
 
-    LightBox.watchedEvents = [
-        Document.events.LOADED,
-        Document.events.LOADFAILED,
-        Article.events.PAGINATIONPROGRESS,
-        Article.events.PAGINATIONPRELOADING  ,
-        //treesaver.ui.StateManager.events.ORIENTATIONCHANGED,
-        "treesaver.chromechanged",   //TODO: Reference treesaver.ui.StateManger.events
-        'mousewheel',
-        'DOMMouseScroll'
-    ];
 
-    LightBox.handleEvent = function(e) {
-        if (e.type === Article.events.PAGINATIONPROGRESS) {
-            // We have new pages to display
-            // TODO
-            // Fire event
-            //events.fireEvent(document, ArticleManager.events.PAGESCHANGED);
-            return;
-        }
-    }
+    /**
+     * List of anonymous handlers for this LightBox
+     *
+     * @type {?Array.<Object>}
+     */
 
-
+    LightBox.prototype.handlers;
 
         /**
    * List of required capabilities for this LightBox
@@ -119,6 +119,22 @@ goog.scope(function() {
    */
   LightBox.prototype.container;
 
+
+
+    LightBox.prototype.handleEvent = function(e) {
+
+        if (e.type === "treesaver.orientationchanged" || e.type === ArticleManager.events.PAGESCHANGED ) {
+            // We have new pages to display
+            // TODO
+            // Fire event
+            //events.fireEvent(document, ArticleManager.events.PAGESCHANGED);
+
+            this.layoutLightbox(this.container);
+
+            return;
+        }
+    }
+
   /**
    * @return {!Element} The activated node.
    */
@@ -130,9 +146,18 @@ goog.scope(function() {
       this.container = dom.querySelectorAll('.container', this.node)[0];
 
 
+
         LightBox.watchedEvents.forEach(function(evt) {
-            events.addListener(document, evt, LightBox.handleEvent);
-        });
+            var that = this;
+            var handler =  function(event) {
+                that.handleEvent(event);
+            };
+            events.addListener(document, evt, handler );
+
+            that.handlers[evt]=handler;
+        },this);
+
+
        // if (capabilities.SUPPORTS_ORIENTATION && !treesaver.inContainedMode) {
        //     events.addListener(window, 'orientationchange',LightBox.handleEvent);
        // }
@@ -144,6 +169,76 @@ goog.scope(function() {
     return /** @type {!Element} */ (this.node);
   };
 
+
+
+   LightBox.prototype.layoutLightbox=function(container) {
+       var screenW = dimensions.getOffsetWidth(container.offsetParent),
+           screenH = dimensions.getOffsetHeight(container.offsetParent),
+           orientation =   window['orientation'],
+           contentW, contentH, windowW,windowH,metrics,tmp_w;
+
+
+       metrics = new dimensions.Metrics(container);
+       contentW = metrics.w;
+       contentH = metrics.h;
+       windowW =  window.screen.width;
+       windowH =  window.screen.height;
+
+
+
+       if (capabilities.SUPPORTS_ORIENTATION && !treesaver.inContainedMode) {
+           if (orientation % 180) {
+               // Rotated (landscape)
+               // StateManager.state_.viewport.setAttribute('content',
+               //    'width=device-height, height=device-width');
+            //   tmp_w = contentW;
+            //   contentW=contentH;
+            //   contentH=tmp_w;
+
+               tmp_w = screenW;
+             //  screenW = screenH;
+              // screenH = tmp_w;
+
+               windowW =  window.screen.height;
+               windowH =  window.screen.width;
+
+
+             //  tmp_w = metrics.bpWidth;
+
+            //   metrics.bpWidth = metrics.bpHeight;
+            //   metrics.bpHeight = tmp_w;
+
+           //    left_attr="top";
+           //    top_attr="left";
+
+           } else {
+               // Normal
+               //  StateManager.state_.viewport.setAttribute('content',
+               //      'width=device-width, height=device-height');
+           }
+       }
+
+       var chromeElement =  dom.querySelectorAll('.chrome', document)[0];     //this.container.parentElement.parentNode.firstChild
+       var chromeWidth =  dimensions.getOffsetWidth(chromeElement);
+       var chromeHeight =   dimensions.getOffsetHeight(chromeElement);
+       dimensions.setCssPx(container.parentElement, 'width', chromeWidth);
+       dimensions.setCssPx(container.parentElement, 'height', chromeHeight);
+
+
+      // dimensions.setCssPx(container.parentElement,"width",screenW)    ;
+      // dimensions.setCssPx(container.parentElement,"height",screenH)    ;
+       // Center the container on the screen (use offsetWidth to include border/padding)
+      // dimensions.setCssPx(container, 'left', (windowW - contentW ) / 2);
+      // dimensions.setCssPx(container, 'top', (windowH - contentH ) / 2);
+       dimensions.setCssPx(this.container, "left", (screenW - contentW - metrics.bpWidth) / 2);
+       dimensions.setCssPx(this.container, "top", (screenH - contentH - metrics.bpHeight) / 2);
+
+
+
+
+   };
+
+
   /**
    * Deactivate the lightbox
    */
@@ -153,9 +248,11 @@ goog.scope(function() {
     }
 
     this.active = false;
-      LightBox.watchedEvents.forEach(function(evt) {
-          events.removeListener(document, evt, LightBox.handleEvent);
-      });
+    LightBox.watchedEvents.forEach(function(evt) {
+        events.removeListener(document, evt, this.handlers[evt]);
+    },this);
+    this.handlers = {};
+
      // if (capabilities.SUPPORTS_ORIENTATION && !treesaver.inContainedMode) {
      ///     events.removeListener(window, 'orientationchange', LightBox.handleEvent);
      // }
@@ -225,9 +322,11 @@ goog.scope(function() {
         Scrollable.initDom(this.container);
       }
 
+        this.layoutLightbox(this.container);
+
       // Center the container on the screen (use offsetWidth to include border/padding)
-      dimensions.setCssPx(this.container, 'left', (screenW - contentW - metrics.bpWidth) / 2);
-      dimensions.setCssPx(this.container, 'top', (screenH - contentH - metrics.bpHeight) / 2);
+      //dimensions.setCssPx(this.container, 'left', (screenW - contentW - metrics.bpWidth) / 2);
+      //dimensions.setCssPx(this.container, 'top', (screenH - contentH - metrics.bpHeight) / 2);
       return true;
     }
     else {

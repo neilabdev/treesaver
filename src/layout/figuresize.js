@@ -85,7 +85,7 @@ goog.scope(function() {
         var data_src =  e.getAttribute('data-src');
 
         var scaletofit = dom.hasClass(e,"scaletofit");
-        var containerNode = e.parentNode;
+        var containerNode = e.parentNode;     //TODO: Should find parent node to compensate for other parents bsizes divs, such as <A>nchor tags.
 
         var imageHeight = (dom.prefetch_set[data_src] &&   dom.prefetch_set[data_src].height)  || e.getAttribute("height") ||  e.getAttribute("data-height")|| 0  ;
         var imageWidth = (dom.prefetch_set[data_src] &&   dom.prefetch_set[data_src].width)  || e.getAttribute("width") || e.getAttribute("data-width") ||0    ;

@@ -719,6 +719,16 @@ goog.scope(function() {
               handled = true;
             }
           }
+        } else if(!handled && el.hasAttribute("data-href")) {
+            // TODO: If this could simulate a <a> href click would be best.
+            // This block was added because adding <a> achors around image or div figure could breake 'scaletofit' funcitonality.
+            // This allows IPAD to catch you to add data-href as a subsitute for anchor, which can be caught on IPAD and used
+            // as a form of IPC for clicks. JKW
+            var data_href = el.getAttribute("data-href");
+            url = network.absoluteURL(data_href);
+
+            location.href = url;
+            handled = true;
         }
         el = /** @type {!Element} */ (el.parentNode);
       }

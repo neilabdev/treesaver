@@ -727,7 +727,7 @@ goog.scope(function() {
             var data_href = el.getAttribute("data-href");
             url = network.absoluteURL(data_href);
 
-            location.href = url;
+            window.location.href = url;
             handled = true;
         }
         el = /** @type {!Element} */ (el.parentNode);

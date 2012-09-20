@@ -1291,7 +1291,20 @@ goog.scope(function() {
         return parent;
       }
     }
-    return null;
+
+      //TODO: Remove this behavior and fix theme to work with standard behavior above. It was added because 0.9.0 behavior uses the elements parent instead of its ancestor to add the sidbar-active class.
+
+      /* var  sibling = el.parentNode.firstChild;
+
+       while( sibling  ) {
+       if (sibling.nodeType === 1 && dom.hasClass(sibling, 'sidebar')) {
+       return sibling;
+       }
+       sibling = sibling.nextElementSibling || sibling.nextSibling;
+
+       } */
+
+      return el.parentNode; //null;
   };
 
   /**

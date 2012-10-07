@@ -65,11 +65,11 @@ goog.scope(function() {
    * @private
    */
   scheduler.requestAnimationFrameFunction_ = function() {
-    return window.requestAnimationFrame ||
-      window.webkitRequestAnimationFrame ||
-      window.mozRequestAnimationFrame ||
-      window.oRequestAnimationFrame ||
-      window.msRequestAnimationFrame ||
+      return window.requestAnimationFrame ||
+    //  window.webkitRequestAnimationFrame ||
+    //  window.mozRequestAnimationFrame ||
+    //  window.oRequestAnimationFrame ||
+   //   window.msRequestAnimationFrame ||
       function(callback, element) {
         return window.setTimeout(callback, scheduler.TASK_INTERVAL);
       }
@@ -87,11 +87,12 @@ goog.scope(function() {
    */
   scheduler.cancelAnimationFrameFunction_ = function() {
     return window.cancelAnimationFrame ||
-      window.webkitCancelRequestAnimationFrame ||
-      window.mozCancelRequestAnimationFrame ||
-      window.oCancelRequestAnimationFrame ||
-      window.msCancelRequestAnimationFrame ||
-      window.clearTimeout;
+    //  window.webkitCancelAnimationFrame || // webkit also has this defined? JKW
+    //  window.webkitCancelRequestAnimationFrame ||
+    //  window.mozCancelRequestAnimationFrame ||
+    //  window.oCancelRequestAnimationFrame ||
+    //  window.msCancelRequestAnimationFrame ||
+        window.clearTimeout;
   }();
 
   /**

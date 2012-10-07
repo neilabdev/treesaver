@@ -214,8 +214,14 @@ goog.scope(function() {
     else if (uri.isIndex(this.url)) {
       return url === uri.stripFile(this.url);
     }
-    else {
-      return url === this.url;
+    else {            //treesaver.uri.parse(url)
+        var uri_parts =  treesaver.uri.parse(this.url);
+
+        //Added because url if may not contain the host part, but this.url does. JKW 10/1/12
+        if(uri_parts.relative === url)
+            return true;
+
+        return url === this.url;
     }
   };
 

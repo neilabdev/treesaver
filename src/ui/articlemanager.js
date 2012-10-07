@@ -1065,6 +1065,7 @@ goog.scope(function() {
       treesaver.history.replaceState({
         index: index,
         url: url,
+        url: url,
         position: pos
       }, doc.meta['title'] || '', path);
     }
